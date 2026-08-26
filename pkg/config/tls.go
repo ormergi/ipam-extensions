@@ -76,10 +76,7 @@ func ParseTLSOptions(
 	}
 
 	groupPreferenceNames := parseStringSlice(tlsGroupPreferencesRaw)
-	groupPreferenceIDs, err := toGroupIDs(groupPreferenceNames)
-	if err != nil {
-		return nil, err
-	}
+	groupPreferenceIDs := toGroupIDs(groupPreferenceNames)
 
 	tlsOpts := func(c *tls.Config) {
 		if tlsMinVersion > 0 {
@@ -115,12 +112,14 @@ func toCipherSuiteIDs(cipherSuiteNames []string) ([]uint16, error) {
 	return ids, nil
 }
 
-func toGroupIDs(groupNames []string) ([]tls.CurveID, error) {
-	ids, err := getValuesByKeys(tlsGroupIDByName, groupNames)
-	if err != nil {
-		return nil, fmt.Errorf("unable to find group preference IDs: %w", err)
+func toGroupIDs(groupNames []string) []tls.CurveID {
+	var ids []tls.CurveID
+	for _, groupName := range groupNames {
+		if id, exists := tlsGroupIDByName[groupName]; exists {
+			ids = append(ids, id)
+		}
 	}
-	return ids, nil
+	return ids
 }
 
 // getValuesByKeys returns the values for the given keys from the map.

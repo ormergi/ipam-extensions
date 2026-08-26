@@ -61,13 +61,6 @@ var _ = Describe("ParseTLSOptions", func() {
 				curves:     "X25519",
 			},
 		),
-		Entry("invalid TLS curve preference",
-			flags{
-				curves:     "straight",
-				minVersion: "VersionTLS12",
-				ciphers:    "TLS_AES_128_GCM_SHA256",
-			},
-		),
 	)
 
 	DescribeTable("should succeed, given",
@@ -92,8 +85,18 @@ var _ = Describe("ParseTLSOptions", func() {
 			&tls.Config{CipherSuites: []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256}},
 		),
 		Entry("curve preferences",
-			flags{curves: "X25519"},
-			&tls.Config{CurvePreferences: []tls.CurveID{tls.X25519}},
+			flags{curves: "X25519,CurveP256,CurveP384,CurveP521,SecP256r1MLKEM768,X25519MLKEM768,SecP384r1MLKEM1024"},
+			&tls.Config{CurvePreferences: []tls.CurveID{
+				tls.X25519,
+				tls.CurveP256,
+				tls.CurveP384,
+				tls.CurveP521,
+				tls.X25519MLKEM768,
+			}},
+		),
+		Entry("unknown TLS curve preference, should ignore silently (let the runtime pick the appropriate TLS groups)",
+			flags{curves: "straight,circle,X25519MLKEM768"},
+			&tls.Config{CurvePreferences: []tls.CurveID{tls.X25519MLKEM768}},
 		),
 		Entry("min version & ciphers",
 			flags{
